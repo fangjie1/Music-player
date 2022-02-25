@@ -1,4 +1,4 @@
-# music-demo
+# Music-Player
 
 ## Project setup
 ```

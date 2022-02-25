@@ -1,5 +1,5 @@
 {
-  "name": "music-app",
+  "name": "music-player",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -10,6 +10,7 @@
   "dependencies": {
     "axios": "^0.24.0",
     "core-js": "^3.6.5",
+    "default-passive-events": "^2.0.0",
     "postcss": "^8.4.4",
     "postcss-pxtorem": "5.1.1",
     "vant": "^2.12.35",

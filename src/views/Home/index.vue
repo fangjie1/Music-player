@@ -39,6 +39,7 @@ export default {
     const res2 = await newMusicAPI({
       limit: 20
     });
+    console.log(res2);
     this.songList = res2.data.result;
   },
   components: {

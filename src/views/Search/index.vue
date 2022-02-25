@@ -22,7 +22,7 @@
                 finished-text="没有更多了"
                 @load="onLoad">
         <SongItem v-for="obj in resultList"
-                  :key="obj.id"
+                  :key="obj.index"
                   :name="obj.name"
                   :author="obj.ar[0].name"
                   :id="obj.id"></SongItem>

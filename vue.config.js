@@ -35,11 +35,22 @@ module.exports = {
     chainWebpack (config) {
         config.plugin('html').tap((args) => {
             args[0].cdn = cdn
+            args[0].title ='music-player'
             return args
         })
+        // 去除注释,log
         config.when(process.env.NODE_ENV !== 'development', config => {
             config.optimization.minimizer('terser').tap(options => {
-                options[0].terserOptions.compress.drop_console = true
+                // 注释console.*
+                args[0].terserOptions.compress.drop_console = true
+                // remove debugger
+                args[0].terserOptions.compress.drop_debugger = true
+                // 移除 console.log
+                args[0].terserOptions.compress.pure_funcs = ['console.log']
+                // 去掉注释 如果需要看chunk-vendors公共部分插件，可以注释掉就可以看到注释了
+                args[0].terserOptions.output = {
+                    comments: false
+                };
                 return options
             })
         })

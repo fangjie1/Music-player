@@ -3,8 +3,10 @@ import App from './App.vue'
 import "@/mobile/flexible"
 import "@/styles/reset.css"
 import router from '@/router'
+import '@/vender/icon'
+import 'default-passive-events'
 
-import { Tabbar, TabbarItem, NavBar, Col, Row, Image as VanImage, Cell, Icon, Search, List ,Loading} from 'vant';
+import { Tabbar, TabbarItem, NavBar, Col, Row, Image as VanImage, Cell, Icon, Search, List, Loading, Toast} from 'vant';
 
 Vue.use(Cell);
 Vue.use(Tabbar);
@@ -17,6 +19,7 @@ Vue.use(Icon);
 Vue.use(Search);
 Vue.use(List);
 Vue.use(Loading);
+Vue.use(Toast);
 
 Vue.config.productionTip = false
 

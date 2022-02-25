@@ -1,45 +1,53 @@
 <template>
-  <div>
-    <!-- 此处的ref属性，可以很方便的在vue组件中通过 this.$refs.audio获取该dom元素 -->
+  <div class="play-bar"
+       v-if="src">
     <audio ref="audio"
-           @pause="onPause"
-           @play="onPlay"
            @timeupdate="handleAudioTimeUpdated"
            @loadedmetadata="onLoadedmetadata"
            :src="src"
            controls="controls"
-           style="display: none"
-           loop></audio>
-    <!-- 音频播放控件 -->
-    <div class="p_cotrol">
-      <div @click="playaudio">
-        <div v-if="audio.playing"
-             class="image_box">
-          <img class="p_img"
-               @click="onPlay()"
-               src="./Pause.png"
-               alt />
-        </div>
-
-        <div v-else
-             class="image_box">
-          <img class="p_img"
-               @click="onPause()"
-               src="./play.png"
-               alt />
-        </div>
+           :loop="audio.loop"
+           style="display:none"></audio>
+    <div class="bar-area">
+      <span class="time-start">{{audio.minTime | formatSecond}}</span>
+      <span class="time-end">{{audio.maxTime | formatSecond}}</span>
+      <div class="bar">
+        <div ref="progress"
+             class="progress"></div>
       </div>
-      <div class="p_time">{{ audio.currentTime | formatSecond }}</div>
-      <div class="p_slider"
-           @touchstart="handleTouchStart">
-        <div class="p_slider_track"></div>
-        <div class="p_slider_fill"
-             :style="'width:' + sliderTime + '%'"></div>
-        <div class="p_slider_thumb"
-             :style="'left:' + sliderTime + '%'"></div>
-      </div>
-
-      <div class="p_time">{{ audio.maxTime | formatSecond }}</div>
+    </div>
+    <div class="actions">
+      <svg class="btn-order"
+           xmlns:xlink="http://www.w3.org/1999/xlink"
+           aria-hidden="true"
+           @click="isLoop">
+        <use xlink:href="#icon-circle" />
+      </svg>
+      <svg class="btn-pre"
+           xmlns:xlink="http://www.w3.org/1999/xlink"
+           aria-hidden="true"
+           @click="pre">
+        <use xlink:href="#icon-pre" />
+      </svg>
+      <svg ref="isPlay"
+           class="btn-play-pause pause"
+           xmlns:xlink="http://www.w3.org/1999/xlink"
+           aria-hidden="true"
+           @click="playAudio">
+        <use ref="use"
+             :xlink:href="`#icon-${icon}`" />
+      </svg>
+      <svg class="btn-next"
+           xmlns:xlink="http://www.w3.org/1999/xlink"
+           aria-hidden="true"
+           @click="next">
+        <use xlink:href="#icon-next" />
+      </svg>
+      <svg class="btn-music-list"
+           xmlns:xlink="http://www.w3.org/1999/xlink"
+           aria-hidden="true">
+        <use xlink:href="#icon-list" />
+      </svg>
     </div>
   </div>
 </template>
@@ -48,143 +56,108 @@
 // 将整数转换成 时：分：秒的格式
 function realFormatSecond (second) {
   var secondType = typeof second;
-
   if (secondType === "number" || secondType === "string") {
-    second = parseInt(second);
-
     var hours = Math.floor(second / 3600);
     second = second - hours * 3600;
     var minutes = Math.floor(second / 60);
     second = second - minutes * 60;
-
     return (
-      hours + ":" + ("0" + minutes).slice(-2) + ":" + ("0" + second).slice(-2)
+      ("0" + minutes).slice(-2) + ":" + ("0" + second).slice(-2)
     );
   } else {
-    return "0:00:00";
+    return "00:00";
   }
 }
 export default {
   name: "Audio",
   data () {
     return {
-      sliderTime: 0, //滑动进度时间
       audio: {
         playing: false, // 该字段是音频是否处于播放状态的属性
         currentTime: 0, // 音频当前播放时长
         maxTime: 0, // 音频最大播放时长
         minTime: 0,
-        step: 0.1
-      }
+        loop: false,
+      },
+      icon: 'play'
     };
   },
   props: {
     src: String,
-    preload: Boolean
+    changSong: {
+      type: Boolean,
+      default: false
+    },
+
   },
   mounted () {
     this.$refs.audio.onerror = () => {
-
+      if (this.$refs.audio.error.message) {
+        this.$toast.fail('当前音乐暂时无法播放')
+      }
+    }
+    this.$refs.audio.onended = () => {
+      this.icon = 'play'
+      this.$emit('changStatus', !this.audio.playing)
+      this.$emit('isEnd')
+      this.audio.minTime = 0
     }
   },
-  watch: {},
   methods: {
     // 控制音频的播放与暂停
-    playaudio () {
-      console.log("控制音频的播放与暂停");
-      this.$emit("playState", this.audio.playing);
-      return this.audio.playing ? this.pause() : this.play();
+    playAudio () {
+      if (this.icon == 'play') {
+        this.icon = 'pause'
+        this.audio.playing = true
+        this.play()
+      } else {
+        this.icon = 'play'
+        this.audio.playing = false
+        this.pause()
+      }
+      this.$emit('changStatus', this.audio.playing)
     },
     // 播放音频
     play () {
+      console.log("播放音频");
       this.$refs.audio.play();
     },
     // 暂停音频
     pause () {
-      this.$refs.audio.pause();
       console.log("暂停音频");
+      this.$refs.audio.pause();
     },
-    // 音频播放
-    onPlay () {
-      this.audio.playing = true;
-
-      console.log("音频播放");
-    },
-    // 当音频暂停
-    onPause () {
-      this.audio.playing = false;
-    },
-
     // 当指定的音频/视频的元数据已加载时，会发生 loadedmetadata 事件。
     onLoadedmetadata (e) {
-      console.log(e);
       console.log("loadedmetadata数据已加载时");
+      // 切换自动播放
+      if (this.changSong) {
+        this.play()
+      }
       this.audio.maxTime = parseInt(e.target.duration);
     },
     // 当音频当前时间改变后，进度条也要改变
     handleAudioTimeUpdated (e) {
-      // console.log(res.target.currentTime)
       this.audio.currentTime = e.target.currentTime;
       this.sliderTime = parseInt(
         (this.audio.currentTime / this.audio.maxTime) * 100
       );
+      this.audio.minTime = parseInt(this.audio.currentTime);
     },
-
-    // 进度条格式化toolTip
-    formatProcessToolTip (index = 0) {
-      index = parseInt((this.audio.maxTime / 100) * index);
-      return "进度条: " + realFormatSecond(index);
-    },
-    // touchstart	触摸开始，多点触控，后面的手指同样会触发
-    // touchmove	接触点改变，滑动时
-    // touchend	触摸结束，手指离开屏幕时
-    // touchcancel	触摸被取消，当系统停止跟踪触摸的时候触发
-    handleTouchStart (e) {
-      console.log(e);
-      this.setValue(e.touches[0]);
-      document.addEventListener("touchmove", this.handleTouchMove);
-      document.addEventListener("touchup", this.handleTouchEnd);
-      document.addEventListener("touchend", this.handleTouchEnd);
-      document.addEventListener("touchcancel", this.handleTouchEnd);
-    },
-    handleTouchMove (e) {
-      console.log(e.changedTouches[0]);
-      this.setValue(e.changedTouches[0]);
-    },
-    handleTouchEnd (e) {
-      this.setValue(e.changedTouches[0]);
-      document.removeEventListener("touchmove", this.handleTouchMove);
-      document.removeEventListener("touchup", this.handleTouchEnd);
-      document.removeEventListener("touchend", this.handleTouchEnd);
-      document.removeEventListener("touchcancel", this.handleTouchEnd);
-    },
-    // 从点击位置更新 value
-    setValue (e) {
-      // Element.getBoundingClientRect() 方法返回元素的大小及其相对于视口的位置。
-      //clientX  点击位置距离当前body可视区域的x，y坐标
-      // console.log(e, this.audio, this.$e);
-      const $el = this.$el;
-      const { maxTime, minTime, step } = this.audio;
-      // console.log($el,'$el.offsetWidth')
-      let value =
-        ((e.clientX - $el.getBoundingClientRect().left) / $el.offsetWidth) *
-        (maxTime - minTime);
-      value = Math.round(value / step) * step + minTime;
-      value = parseFloat(value.toFixed(5));
-      if (value > maxTime) {
-        value = maxTime;
-      } else if (value < minTime) {
-        value = minTime;
+    // 是否循环播放
+    isLoop () {
+      this.audio.loop = !this.audio.loop
+      if (this.audio.loop) {
+        this.$toast.success('已开启循环播放')
+      } else {
+        this.$toast.success('已关闭循环播放')
       }
-      this.$refs.audio.currentTime = value;
     },
-    // 拖动进度条，改变当前时间，index是进度条改变时的回调函数的参数0-100之间，需要换算成实际时间
-    changeCurrentTime (index) {
-      console.log("拖动进度条");
-      // console.log('拖动了',index,this.sliderTime,this.audio.maxTime,parseInt(index / 100 * this.audio.maxTime))
-      this.$refs.audio.currentTime = parseInt(
-        (index / 100) * this.audio.maxTime
-      );
+    pre () {
+      this.$emit('pre')
+    },
+    next () {
+      this.$emit('next')
     }
   },
   filters: {
@@ -193,74 +166,71 @@ export default {
       return realFormatSecond(second);
     }
   }
-};
+}
 </script>
+<style lang='scss' scoped>
+.play-bar {
+  .bar-area {
+    color: #868aaf;
+    font-size: 16px;
+    display: flex;
+    padding: 0 20px;
+    margin-top: 20px;
+    align-items: center;
+    .time-start {
+      order: 1;
+      width: 40px;
+    }
+    .time-end {
+      order: 3;
+      width: 40px;
+    }
+    .bar {
+      order: 2;
+      flex: 1;
+      height: 4px;
+      background: #0025f1;
+      border-radius: 2px;
+      margin: 0 12px;
+      .progress {
+        width: 0%;
+        transition: all 0.2s;
+        height: 100%;
+        border-radius: 2px;
+        background: #db3baa;
+        position: relative;
 
-<style scoped lang="scss">
-.p_cotrol {
-  margin: 0 auto;
-  display: flex;
-  padding: 5px;
+        &::after {
+          content: "";
+          position: absolute;
+          right: -8px;
+          top: -7px;
+          display: block;
+          width: 16px;
+          height: 16px;
+          background: url("../assets/svg/progress.svg") 0 0 no-repeat;
+          background-size: contain;
+        }
+      }
+    }
+  }
 
-  border-radius: 50px;
-  align-items: center;
-  .image_box {
+  .actions {
     display: flex;
     align-items: center;
-  }
-  .p_img {
-    width: 30px;
-    height: 30px;
-  }
-  .p_time {
-    font-size: 14px;
-    line-height: 30px;
-    margin: 0 10px;
-  }
+    justify-content: space-between;
+    margin-top: 20px;
+    padding: 0 20px;
+    font-size: 60px;
+    svg {
+      width: 28px;
+      height: 28px;
 
-  // 进度条
-  .p_slider {
-    width: 100%;
-    position: relative;
-    height: 24px;
-    display: flex;
-    align-items: center;
-    cursor: default;
-    user-select: none;
-    outline: none;
-  }
-
-  .p_slider_track {
-    position: absolute;
-    height: 2px;
-    left: 0;
-    right: 0;
-    top: 50%;
-    margin-top: -1px;
-    background-color: #f7e4a5;
-  }
-
-  .p_slider_fill {
-    position: absolute;
-    height: 2px;
-    width: 100%;
-    background-color: #ffcd3a;
-    left: 0;
-    top: 50%;
-    margin-top: -1px;
-  }
-
-  .p_slider_thumb {
-    position: absolute;
-    top: 50%;
-    width: 12px;
-    height: 12px;
-    background-color: #ffcd3a;
-    color: #ffcd3a;
-    border-radius: 50%;
-    transform: translate(-50%, -50%);
-    cursor: pointer;
+      &.btn-play-pause {
+        width: 50px;
+        height: 50px;
+      }
+    }
   }
 }
 </style>
-
