@@ -93,7 +93,6 @@
 import Audio from "../../components/Audio";
 import Swiper from '../../vender/swiper'
 import { getSongByIdAPI, getLyricByIdAPI, recommendGetPlaylistAPI } from "@/api";
-
 export default {
   name: 'Play',
   data () {
@@ -108,7 +107,7 @@ export default {
       lyricIndex: 0, // 当前歌词索引
       curLyric: "", // 当前显示哪句歌词
       lastLy: "", // 记录当前播放歌词
-      curTime: "",//记录当前播放时间
+      currentTime: "",//记录当前播放时间
       isRecommendMusic: this.$route.query.isRecommendMusic || 0,
       songId: '',// 歌曲id
       songs: [],// 歌单
@@ -126,20 +125,25 @@ export default {
     Audio,
   },
   watch: {
-    curTime () {
-      if (this.lyric[this.curTime]) {
-        this.curLyric = this.lyric[this.curTime];
+    currentTime () {
+      if (this.lyric[this.currentTime]) {
+        this.curLyric = this.lyric[this.currentTime];
         this.lastLy = this.curLyric;
       } else {
         this.curLyric = this.lastLy;
       }
-      if (this.curTime == 0 && this.$refs.lyrics) {
+      if (this.currentTime == 0 && this.$refs.lyrics) {
         this.$refs.lyrics.forEach(node => node.classList.remove('current'))
         this.$refs.container.style.transform = `translateY(0px)`
         this.lyricIndex = 0
       }
+      this.lyricTimeArr.forEach((time, index) => {
+        if (time == this.currentTime) {
+          // 进度条跳转后重置当前歌词索引
+          this.lyricIndex = index - 1
+        }
+      })
       this.locateLyric()
-      this.setProgressBar()
     }
   },
   methods: {
@@ -198,16 +202,15 @@ export default {
       this.$refs.audio.$refs.audio.addEventListener("timeupdate", this.lyricTimeFn)
     },
     lyricTimeFn () {
-      this.curTime = Math.floor(this.$refs.audio.$refs.audio.currentTime);
+      this.currentTime = Math.floor(this.$refs.audio.$refs.audio.currentTime);
     },
     // 获取当前播放歌词标签
     locateLyric () {
-      let nextLineTime = this.lyricTimeArr[this.lyricIndex]
-      if (this.curTime >= nextLineTime && this.lyricIndex < this.lyricTimeArr.length) {
+      let currentLineTime = this.lyricTimeArr[this.lyricIndex]
+      if (this.currentTime >= currentLineTime && this.lyricIndex < this.lyricTimeArr.length) {
         let node = this.$refs.lyrics[this.lyricIndex]
         if (node) {
           this.setLyricToCenter(node)
-          // 获取下一句歌词对应的时间
           this.lyricIndex++
         }
       }
@@ -219,11 +222,6 @@ export default {
       this.$refs.container.style.transform = `translateY(-${translateY}px)`
       this.$refs.lyrics.forEach(node => node.classList.remove('current'))
       node.classList.add('current')
-    },
-    // 设置进度条
-    setProgressBar () {
-      let percent = (this.curTime * 100 / this.$refs.audio.$refs.audio.duration) + '%'
-      this.$refs.audio.$refs.progress.style.width = percent
     },
     // 上一首
     pre () {
@@ -262,7 +260,6 @@ export default {
     if (this.isRecommendMusic) {
       recommendGetPlaylistAPI({ id: this.id, limit: 10, offset: 0 }).then(data => {
         this.songs = data.data.songs
-        // const index = Math.floor(Math.random() * 9) + 1;
         this.getSong(this.songs[this.songIndex].id);
       })
     } else {

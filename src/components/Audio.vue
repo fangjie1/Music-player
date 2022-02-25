@@ -11,7 +11,11 @@
     <div class="bar-area">
       <span class="time-start">{{audio.minTime | formatSecond}}</span>
       <span class="time-end">{{audio.maxTime | formatSecond}}</span>
-      <div class="bar">
+      <div ref="bar"
+           class="bar"
+           @touchstart.prevent="progressTouchStart"
+           @touchmove.prevent="progressTouchMove"
+           @touchend="progressTouchEnd">
         <div ref="progress"
              class="progress"></div>
       </div>
@@ -79,7 +83,11 @@ export default {
         minTime: 0,
         loop: false,
       },
-      icon: 'play'
+      icon: 'play',
+      touchInfo: {
+        initiated: false
+      },
+      percent: 0
     };
   },
   props: {
@@ -88,7 +96,6 @@ export default {
       type: Boolean,
       default: false
     },
-
   },
   mounted () {
     this.$refs.audio.onerror = () => {
@@ -100,7 +107,9 @@ export default {
       this.icon = 'play'
       this.$emit('changStatus', !this.audio.playing)
       this.$emit('isEnd')
+      this.audio.playing = false
       this.audio.minTime = 0
+      this.percent = this.audio.minTime / this.audio.maxTime * 100
     }
   },
   methods: {
@@ -127,7 +136,7 @@ export default {
       console.log("暂停音频");
       this.$refs.audio.pause();
     },
-    // 当指定的音频/视频的元数据已加载时，会发生 loadedmetadata 事件。
+    // 当指定的音频/视频的元数据已加载时，触发loadedmetadata 事件。
     onLoadedmetadata (e) {
       console.log("loadedmetadata数据已加载时");
       // 切换自动播放
@@ -138,11 +147,10 @@ export default {
     },
     // 当音频当前时间改变后，进度条也要改变
     handleAudioTimeUpdated (e) {
-      this.audio.currentTime = e.target.currentTime;
-      this.sliderTime = parseInt(
-        (this.audio.currentTime / this.audio.maxTime) * 100
-      );
+      this.audio.currentTime = e.target.currentTime
       this.audio.minTime = parseInt(this.audio.currentTime);
+      this.percent = this.audio.minTime / this.audio.maxTime * 100
+      this.$refs.progress.style.width = this.percent + '%'
     },
     // 是否循环播放
     isLoop () {
@@ -158,13 +166,52 @@ export default {
     },
     next () {
       this.$emit('next')
-    }
+    },
+    progressTouchStart (e) {
+      // 记录touch事件已经初始化 
+      this.touchInfo.initiated = true
+      this.touchInfo.startX = e.touches[0].pageX
+      this.touchInfo.left = this.$refs.bar.offsetLeft
+      const barWidth = this.touchInfo.startX - this.touchInfo.left
+      if (barWidth >= 0 && barWidth <= this.$refs.bar.clientWidth) {
+        this.percent = barWidth / this.$refs.bar.clientWidth * 100
+        this.$refs.progress.style.width = this.percent + '%'
+        this.$refs.audio.currentTime = this.percent * this.$refs.audio.duration / 100
+      }
+    },
+    progressTouchMove (e) {
+      if (!this.touchInfo.initiated) {
+        return
+      }
+      // 移动距离 
+      const moveX = e.touches[0].pageX - this.touchInfo.startX
+      const barWidth = this.touchInfo.startX - this.touchInfo.left + moveX
+      if (barWidth >= 0 && barWidth <= this.$refs.bar.clientWidth) {
+        this.percent = barWidth / this.$refs.bar.clientWidth * 100
+        this.$refs.progress.style.width = this.percent + '%'
+        this.$refs.audio.currentTime = this.percent * this.$refs.audio.duration / 100
+      }
+    },
+    progressTouchEnd () {
+      this.touchInfo.initiated = false
+      if (!this.audio.playing) {
+        this.playAudio()
+      }
+    },
   },
   filters: {
     // 将整数转化成时分秒
     formatSecond (second = 0) {
       return realFormatSecond(second);
     }
+  },
+  beforeDestroy () {
+    this.$refs.audio.removeEventListener("touchstart", this.progressTouchStart);
+    this.$refs.audio.removeEventListener("touchmove", this.progressTouchMove);
+    this.$refs.audio.removeEventListener("touchend", this.progressTouchEnd);
+    this.$refs.audio.removeEventListener("timeupdate", this.handleAudioTimeUpdated);
+    this.$refs.audio.removeEventListener("loadedmetadata", this.onLoadedmetadata);
+
   }
 }
 </script>
@@ -177,6 +224,7 @@ export default {
     padding: 0 20px;
     margin-top: 20px;
     align-items: center;
+    touch-action: none;
     .time-start {
       order: 1;
       width: 40px;

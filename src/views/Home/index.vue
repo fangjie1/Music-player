@@ -34,12 +34,10 @@ export default {
   },
   async created () {
     const res = await recommendMusicAPI({ limit: 6 });
-    console.log(res);
     this.reList = res.data.result;
     const res2 = await newMusicAPI({
       limit: 20
     });
-    console.log(res2);
     this.songList = res2.data.result;
   },
   components: {
