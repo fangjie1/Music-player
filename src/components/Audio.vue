@@ -119,7 +119,7 @@ export default {
         this.icon = 'pause'
         this.audio.playing = true
         this.play()
-      } else {
+      } else if (this.icon == 'pause') {
         this.icon = 'play'
         this.audio.playing = false
         this.pause()
@@ -193,10 +193,11 @@ export default {
       }
     },
     progressTouchEnd () {
+      console.log('进度条跳转后播放');
       this.touchInfo.initiated = false
-      if (!this.audio.playing) {
-        this.playAudio()
-      }
+      this.audio.playing = false
+      this.icon = 'play'
+      this.playAudio()
     },
   },
   filters: {
