@@ -49,10 +49,12 @@
       </svg>
       <svg class="btn-music-list"
            xmlns:xlink="http://www.w3.org/1999/xlink"
-           aria-hidden="true">
+           aria-hidden="true"
+           @click="showDig">
         <use xlink:href="#icon-list" />
       </svg>
     </div>
+
   </div>
 </template>
 
@@ -91,11 +93,17 @@ export default {
     };
   },
   props: {
-    src: String,
-    changSong: {
-      type: Boolean,
-      default: false
-    },
+    src: {
+      type: String,
+      require: true
+    }
+  },
+  watch: {
+    percent: {
+      handler (newVal) {
+        this.$refs.progress.style.width = newVal + '%'
+      }
+    }
   },
   mounted () {
     this.$refs.audio.onerror = () => {
@@ -116,41 +124,39 @@ export default {
     // 控制音频的播放与暂停
     playAudio () {
       if (this.icon == 'play') {
-        this.icon = 'pause'
-        this.audio.playing = true
         this.play()
       } else if (this.icon == 'pause') {
-        this.icon = 'play'
-        this.audio.playing = false
         this.pause()
       }
-      this.$emit('changStatus', this.audio.playing)
     },
     // 播放音频
     play () {
       console.log("播放音频");
+      this.icon = 'pause'
+      this.audio.playing = true
       this.$refs.audio.play();
+      this.$emit('changStatus', this.audio.playing)
     },
     // 暂停音频
     pause () {
       console.log("暂停音频");
+      this.icon = 'play'
+      this.audio.playing = false
       this.$refs.audio.pause();
+      this.$emit('changStatus', this.audio.playing)
     },
     // 当指定的音频/视频的元数据已加载时，触发loadedmetadata 事件。
     onLoadedmetadata (e) {
       console.log("loadedmetadata数据已加载时");
       // 切换自动播放
-      if (this.changSong) {
-        this.play()
-      }
+      this.$emit('canplay')
       this.audio.maxTime = parseInt(e.target.duration);
     },
-    // 当音频当前时间改变后，进度条也要改变
+    // 当音频当前时间改变后，改变进度条
     handleAudioTimeUpdated (e) {
       this.audio.currentTime = e.target.currentTime
       this.audio.minTime = parseInt(this.audio.currentTime);
       this.percent = this.audio.minTime / this.audio.maxTime * 100
-      this.$refs.progress.style.width = this.percent + '%'
     },
     // 是否循环播放
     isLoop () {
@@ -199,6 +205,9 @@ export default {
       this.icon = 'play'
       this.playAudio()
     },
+    showDig () {
+      this.$emit('showDig')
+    }
   },
   filters: {
     // 将整数转化成时分秒
@@ -212,7 +221,6 @@ export default {
     this.$refs.audio.removeEventListener("touchend", this.progressTouchEnd);
     this.$refs.audio.removeEventListener("timeupdate", this.handleAudioTimeUpdated);
     this.$refs.audio.removeEventListener("loadedmetadata", this.onLoadedmetadata);
-
   }
 }
 </script>

@@ -1,7 +1,12 @@
 <template>
-  <van-cell center :title="name" :label="author+' - '+name">
+  <van-cell center
+            :title="name"
+            :label="author+' - '+name"
+            @click="playFn">
     <template #right-icon>
-      <van-icon name="play-circle-o" size="0.6rem" @click="playFn" />
+      <van-icon name="play-circle-o"
+                size="0.6rem"
+                @click="playFn" />
     </template>
   </van-cell>
 </template>
@@ -11,16 +16,32 @@ export default {
   props: {
     name: String,
     author: String,
-    id: Number
+    listId: String,
+    id: Number,
+    isRecommendMusic: {
+      type: Number,
+      default: 0
+    }
   },
   methods: {
-    playFn() {
-      this.$router.push({
-        path: "/play",
-        query: {
-          id: this.id
-        }
-      });
+    playFn () {
+      if (this.isRecommendMusic == 1) {
+        this.$router.push({
+          path: "/play",
+          query: {
+            id: this.listId,
+            isRecommendMusic: this.isRecommendMusic
+          }
+        });
+      } else {
+        this.$router.push({
+          path: "/play",
+          query: {
+            id: this.id,
+            isRecommendMusic: this.isRecommendMusic
+          }
+        });
+      }
     }
   }
 };

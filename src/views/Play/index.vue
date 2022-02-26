@@ -82,9 +82,24 @@
              :lastLy="lastLy"
              @pre="pre"
              @next="next"
-             :changSong="changSong"
              @changStatus="changStatus"
-             @isEnd="isEnd"></Audio>
+             @isEnd="isEnd"
+             @showDig="showDigFn"
+             @canplay="playFn"></Audio>
+    </div>
+    <div v-if="songs"
+         class="songs"
+         ref="songs"
+         :class="{show:showDig}">
+      <SongItem v-for="(obj,index) in songs"
+                :key="obj.id"
+                :name="obj.name"
+                :author="obj.ar[0].name"
+                :id="obj.id"
+                :listId="id"
+                :isRecommendMusic="1"
+                @click.native="changeSong(index)">
+      </SongItem>
     </div>
   </div>
 </template>
@@ -92,6 +107,7 @@
 <script>
 import Audio from "../../components/Audio";
 import Swiper from '../../vender/swiper'
+import SongItem from "@/components/SongItem";
 import { getSongByIdAPI, getLyricByIdAPI, recommendGetPlaylistAPI } from "@/api";
 export default {
   name: 'Play',
@@ -110,9 +126,9 @@ export default {
       currentTime: "",//记录当前播放时间
       isRecommendMusic: this.$route.query.isRecommendMusic || 0,
       songId: '',// 歌曲id
-      songs: [],// 歌单
+      songs: null,// 歌单
       songIndex: 0,
-      changSong: false
+      showDig: false,
     };
   },
   computed: {
@@ -122,7 +138,7 @@ export default {
     }
   },
   components: {
-    Audio,
+    Audio, SongItem
   },
   watch: {
     currentTime () {
@@ -144,9 +160,48 @@ export default {
         }
       })
       this.locateLyric()
-    }
+    },
+    showDig () {
+      if (this.showDig) {
+        window.addEventListener('touchstart', this.clickLocation)
+      } else {
+        window.removeEventListener("touchstart", this.clickLocation);
+      }
+    },
   },
   methods: {
+    // 初始化请求歌单数据或歌曲
+    start () {
+      if (this.isRecommendMusic == 1) {
+        recommendGetPlaylistAPI({ id: this.id, limit: 10, offset: 0 }).then(data => {
+          this.songs = data.data.songs
+          this.getSong(this.songs[this.songIndex].id);
+        })
+      } else {
+        this.getSong(this.id);
+      }
+      this.$nextTick(() => {
+        this.swiper()
+        this.showLyric();
+      })
+    },
+    // 滑动切换
+    swiper () {
+      let swiper = new Swiper(this.$refs.content)
+      swiper.on('swiperLeft', function () {
+        this.classList.add('panel1')
+      })
+      swiper.on('swiperRight', function () {
+        this.classList.remove('panel1')
+      })
+    },
+    // 切换歌曲单个歌曲
+    changeSong (index) {
+      this.songIndex = index
+      this.getSong(this.songs[this.songIndex].id)
+      this.showDig = false
+    },
+    // 获取歌曲
     async getSong (id) {
       // 获取歌曲id
       this.songId = id
@@ -200,6 +255,10 @@ export default {
     // 监听播放audio进度, 切换歌词显示
     showLyric () {
       this.$refs.audio.$refs.audio.addEventListener("timeupdate", this.lyricTimeFn)
+      this.$refs.audio.$refs.audio.addEventListener("timeupdate", this.lyricTimeFn)
+    },
+    playFn () {
+      this.$refs.audio.play()
     },
     lyricTimeFn () {
       this.currentTime = Math.floor(this.$refs.audio.$refs.audio.currentTime);
@@ -225,7 +284,7 @@ export default {
     },
     // 上一首
     pre () {
-      if (!this.isRecommendMusic) return
+      if (this.isRecommendMusic == '0') return
       if (this.songIndex > 0) {
         this.songIndex--
         this.getSong(this.songs[this.songIndex].id);
@@ -233,11 +292,10 @@ export default {
         this.songIndex = this.songs.length - 1
         this.getSong(this.songs[this.songIndex].id);
       }
-      this.changSong = true
     },
     // 下一首
     next () {
-      if (!this.isRecommendMusic) return
+      if (this.isRecommendMusic == '0') return
       if (this.songIndex < this.songs.length - 1) {
         this.songIndex++
         this.getSong(this.songs[this.songIndex].id);
@@ -245,7 +303,6 @@ export default {
         this.songIndex = 0
         this.getSong(this.songs[0].id);
       }
-      this.changSong = true
     },
     // 播放完毕初始化
     isEnd () {
@@ -253,26 +310,25 @@ export default {
       this.$refs.container.style.transform = `translateY(0px)`
       this.lyricIndex = 0
       this.$refs.audio.$refs.progress.style.width = '0px'
-    }
+    },
+    // 展示歌单列表
+    showDigFn () {
+      if (!this.songs) {
+        this.$toast('当前无其他歌曲')
+        return
+      }
+      this.showDig = !this.showDig
+    },
+    // 点击弹层之外的区域关闭弹层
+    clickLocation (e) {
+      const songs = e.path.find(target => target == this.$refs.songs)
+      if (!songs) {
+        this.showDig = false
+      }
+    },
   },
   mounted () {
-    // 判断点击的是否为推荐歌单
-    if (this.isRecommendMusic) {
-      recommendGetPlaylistAPI({ id: this.id, limit: 10, offset: 0 }).then(data => {
-        this.songs = data.data.songs
-        this.getSong(this.songs[this.songIndex].id);
-      })
-    } else {
-      this.getSong(this.id);
-    }
-    let swiper = new Swiper(this.$refs.content)
-    swiper.on('swiperLeft', function () {
-      this.classList.add('panel1')
-    })
-    swiper.on('swiperRight', function () {
-      this.classList.remove('panel1')
-    })
-    this.showLyric();
+    this.start()
   },
   beforeDestroy () {
     this.$refs.audio.$refs.audio.removeEventListener("timeupdate", this.lyricTimeFn);
@@ -397,8 +453,8 @@ export default {
           font-size: 18px;
           color: #fefefe;
           overflow: hidden;
-          // white-space: nowrap;
-          // text-overflow: ellipsis;
+          white-space: nowrap;
+          text-overflow: ellipsis;
         }
         .lrcContent {
           margin-top: 45px;
@@ -423,7 +479,6 @@ export default {
     }
     .panel-lyrics {
       width: 100%;
-      height: calc(100vh - 250px);
       text-align: center;
       overflow: hidden;
       .container {
@@ -446,6 +501,19 @@ export default {
     left: 0;
     height: 160px;
     width: 100vw;
+  }
+  .songs {
+    position: fixed;
+    bottom: -160px;
+    left: 0;
+    height: 160px;
+    width: 100vw;
+    overflow: scroll;
+    transition: all 0.3s;
+    transform: translateY(0);
+    &.show {
+      transform: translateY(-100%);
+    }
   }
 
   @keyframes turn {
