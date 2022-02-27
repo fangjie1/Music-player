@@ -84,6 +84,7 @@ export default {
         maxTime: 0, // 音频最大播放时长
         minTime: 0,
         loop: false,
+        refresh: false
       },
       icon: 'play',
       touchInfo: {
@@ -119,6 +120,9 @@ export default {
       this.audio.minTime = 0
       this.percent = this.audio.minTime / this.audio.maxTime * 100
     }
+    window.addEventListener('DOMContentLoaded', (event) => {
+      this.refresh = true
+    })
   },
   methods: {
     // 控制音频的播放与暂停
@@ -148,8 +152,12 @@ export default {
     // 当指定的音频/视频的元数据已加载时，触发loadedmetadata 事件。
     onLoadedmetadata (e) {
       console.log("loadedmetadata数据已加载时");
-      // 切换自动播放
-      this.$emit('canplay')
+      // 切换自动播放，如果刷新了则停止播放，解决自动播放报错的问题
+      if (!this.refresh) {
+        this.$emit('canplay')
+      } else {
+        this.refresh = false
+      }
       this.audio.maxTime = parseInt(e.target.duration);
     },
     // 当音频当前时间改变后，改变进度条
