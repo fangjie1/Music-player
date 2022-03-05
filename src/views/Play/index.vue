@@ -344,8 +344,9 @@ export default {
   $color2-dark: darken($color2, 10%);
   $color2-darker: darken($color2, 30%);
   $color3: #0025f1;
-  height: 100vh;
-  overflow: hidden;
+  position: fixed;
+  width: 100%;
+  height: 100%;
   .header {
     position: fixed;
     top: 0;
