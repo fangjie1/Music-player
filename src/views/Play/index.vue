@@ -76,6 +76,7 @@
     <Audio ref="audio"
            :src="`https://music.163.com/song/media/outer/url?id=${songId}.mp3`"
            @currentTime="currentTimeFn"
+           @move="moveFn"
            @pre="pre"
            @next="next"
            @changStatus="changStatus"
@@ -137,12 +138,6 @@ export default {
   },
   watch: {
     currentTime () {
-      this.lyricTimeArr.forEach((time, index) => {
-        if (time < this.currentTime) {
-          // 进度条跳转后重置当前歌词索引
-          this.lyricIndex = index
-        }
-      })
       this.locateLyric()
     },
     showDig () {
@@ -168,6 +163,14 @@ export default {
         this.swiper()
       })
 
+    },
+    // 进度条跳转后重置当前歌词索引
+    moveFn () {
+      this.lyricTimeArr.forEach((time, index) => {
+        if (time <= this.currentTime) {
+          this.lyricIndex = index
+        }
+      })
     },
     // 滑动切换
     swiper () {
@@ -199,6 +202,7 @@ export default {
       this.lyric = this._formatLyr(lyricStr);
       // 初始化完毕先显示零秒歌词
       this.curLyric = this.lyric[0];
+      this.lyricIndex = 0
       this.loading = false
     },
     // 生成歌词对象
@@ -257,7 +261,6 @@ export default {
         }
       }
     },
-
     //设置歌词滚动
     setLyricToCenter (node) {
       let translateY = node.offsetTop - this.$refs['panel-lyrics'].offsetHeight / 2
@@ -380,7 +383,7 @@ export default {
   .content {
     margin-top: 50px;
     display: flex;
-    height: -webkit-calc(60vh);
+    height: 62vh;
     width: 200%;
     transition: transform 0.3s;
     &.panel1 {
@@ -473,7 +476,7 @@ export default {
       width: 100%;
       height: 100%;
       text-align: center;
-      overflow: scroll;
+      overflow: hidden;
       min-height: auto;
       .container {
         transition: all 0.4s;

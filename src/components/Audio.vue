@@ -99,13 +99,6 @@ export default {
       require: true
     }
   },
-  watch: {
-    percent: {
-      handler (newVal) {
-        this.$refs.progress.style.width = newVal + '%'
-      }
-    }
-  },
   mounted () {
     this.$refs.audio.onerror = () => {
       if (this.$refs.audio.error.message) {
@@ -166,6 +159,7 @@ export default {
       this.$emit('currentTime', this.audio.currentTime)
       this.audio.minTime = parseInt(this.audio.currentTime);
       this.percent = this.audio.minTime / this.audio.maxTime * 100
+      this.$refs.progress.style.width = this.percent + '%'
     },
     // 是否循环播放
     isLoop () {
@@ -211,6 +205,8 @@ export default {
     },
     progressTouchEnd () {
       console.log('进度条跳转后播放');
+      // 通知父组件更新歌词索引
+      this.$emit('move')
       this.$refs.audio.muted = false
       this.touchInfo.initiated = false
       this.audio.playing = false

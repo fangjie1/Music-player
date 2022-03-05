@@ -4,7 +4,7 @@ import "@/mobile/flexible"
 import "@/styles/reset.css"
 import router from '@/router'
 import '@/vender/icon'
-import 'default-passive-events'
+
 
 import { Tabbar, TabbarItem, NavBar, Col, Row, Image as VanImage, Cell, Icon, Search, List, Loading, Toast} from 'vant';
 
