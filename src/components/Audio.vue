@@ -120,7 +120,7 @@ export default {
       this.audio.minTime = 0
       this.percent = this.audio.minTime / this.audio.maxTime * 100
     }
-    window.addEventListener('DOMContentLoaded', (event) => {
+    window.addEventListener('DOMContentLoaded', () => {
       this.refresh = true
     })
   },
@@ -183,6 +183,7 @@ export default {
     },
     progressTouchStart (e) {
       // 记录touch事件已经初始化 
+      this.$refs.audio.muted = true
       this.touchInfo.initiated = true
       this.touchInfo.startX = e.touches[0].pageX
       this.touchInfo.left = this.$refs.bar.offsetLeft
@@ -195,6 +196,7 @@ export default {
     },
     progressTouchMove (e) {
       if (!this.touchInfo.initiated) {
+        this.$refs.audio.muted = false
         return
       }
       // 移动距离 
@@ -208,6 +210,7 @@ export default {
     },
     progressTouchEnd () {
       console.log('进度条跳转后播放');
+      this.$refs.audio.muted = false
       this.touchInfo.initiated = false
       this.audio.playing = false
       this.icon = 'play'
@@ -234,6 +237,11 @@ export default {
 </script>
 <style lang='scss' scoped>
 .play-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  height: 160px;
+  width: 100vw;
   .bar-area {
     color: #868aaf;
     font-size: 16px;

@@ -77,3 +77,8 @@ abbr,
 acronym {
   border: 0;
 }
+body {
+  position: fixed;
+  width: 100%;
+  height: 100%;
+}

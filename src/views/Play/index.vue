@@ -1,5 +1,5 @@
 <template>
-  <div class="paly">
+  <div class="play">
     <!-- 模糊背景(靠样式设置), 固定定位 -->
     <div class="song-bg"
          :style="`background-image: url(${
@@ -72,21 +72,19 @@
         </div>
       </div>
     </div>
-    <div class="audio">
-      <!-- 播放音频组件 -->
-      <Audio ref="audio"
-             :src="`https://music.163.com/song/media/outer/url?id=${songId}.mp3`"
-             :isPlaying="this.playState"
-             :lyric="lyric"
-             :curLyric="curLyric"
-             :lastLy="lastLy"
-             @pre="pre"
-             @next="next"
-             @changStatus="changStatus"
-             @isEnd="isEnd"
-             @showDig="showDigFn"
-             @canplay="playFn"></Audio>
-    </div>
+    <!-- 播放音频组件 -->
+    <Audio ref="audio"
+           :src="`https://music.163.com/song/media/outer/url?id=${songId}.mp3`"
+           :isPlaying="this.playState"
+           :lyric="lyric"
+           :curLyric="curLyric"
+           :lastLy="lastLy"
+           @pre="pre"
+           @next="next"
+           @changStatus="changStatus"
+           @isEnd="isEnd"
+           @showDig="showDigFn"
+           @canplay="playFn"></Audio>
     <div v-if="songs"
          class="songs"
          ref="songs"
@@ -184,6 +182,7 @@ export default {
         this.swiper()
         this.showLyric();
       })
+
     },
     // 滑动切换
     swiper () {
@@ -337,7 +336,7 @@ export default {
 </script>
 
 <style lang="scss">
-.paly {
+.play {
   $backgroundColor: #060a3d;
   $color: #fff;
   $color1: #868aaf;
@@ -348,6 +347,10 @@ export default {
   height: 100vh;
   overflow: hidden;
   .header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
     height: 50px;
     .left-icon {
       position: absolute;
@@ -387,16 +390,17 @@ export default {
     }
   }
   .content {
+    margin-top: 50px;
     display: flex;
-    height: calc(100vh - 210px);
+    height: -webkit-calc(60vh);
     width: 200%;
-    top: 100px;
     transition: transform 0.3s;
     &.panel1 {
       transform: translateX(-100vw);
     }
     .panel {
       width: 100%;
+      height: 100%;
       display: flex;
       justify-content: center;
       position: relative;
@@ -479,8 +483,10 @@ export default {
     }
     .panel-lyrics {
       width: 100%;
+      height: 100%;
       text-align: center;
       overflow: hidden;
+      min-height: auto;
       .container {
         transition: all 0.4s;
         p {
@@ -495,13 +501,7 @@ export default {
       }
     }
   }
-  .audio {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    height: 160px;
-    width: 100vw;
-  }
+
   .songs {
     position: fixed;
     bottom: -160px;

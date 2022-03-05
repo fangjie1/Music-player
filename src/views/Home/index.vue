@@ -1,18 +1,20 @@
 <template>
   <div>
     <p class="title">推荐歌单</p>
-    <van-row gutter="6">
-      <van-col span="8"
-               v-for="obj in reList"
-               :key="obj.id">
-        <van-image width="100%"
-                   height="3rem"
-                   fit="cover"
-                   @click="palyFn(obj.id)"
-                   :src="obj.picUrl" />
-        <p class="song_name">{{obj.name}}</p>
-      </van-col>
-    </van-row>
+    <div class="songlist">
+      <van-row gutter="6">
+        <van-col span="8"
+                 v-for="obj in reList"
+                 :key="obj.id">
+          <van-image width="100%"
+                     height="3rem"
+                     fit="cover"
+                     @click="palyFn(obj.id)"
+                     :src="obj.picUrl" />
+          <p class="song_name">{{obj.name}}</p>
+        </van-col>
+      </van-row>
+    </div>
     <p class="title">最新音乐</p>
     <SongItem v-for="obj in songList"
               :key="obj.id"
@@ -67,6 +69,11 @@ export default {
   background-color: #eee;
   color: #333;
   font-size: 15px;
+}
+
+.van-row {
+  display: flex;
+  flex-wrap: wrap;
 }
 /* 推荐歌单 - 歌名 */
 .song_name {
