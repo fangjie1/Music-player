@@ -205,8 +205,6 @@ export default {
     },
     progressTouchEnd () {
       console.log('进度条跳转后播放');
-      // 通知父组件更新歌词索引
-      this.$emit('move')
       this.$refs.audio.muted = false
       this.touchInfo.initiated = false
       this.audio.playing = false

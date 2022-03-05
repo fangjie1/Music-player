@@ -76,7 +76,6 @@
     <Audio ref="audio"
            :src="`https://music.163.com/song/media/outer/url?id=${songId}.mp3`"
            @currentTime="currentTimeFn"
-           @move="moveFn"
            @pre="pre"
            @next="next"
            @changStatus="changStatus"
@@ -138,6 +137,12 @@ export default {
   },
   watch: {
     currentTime () {
+      this.lyricTimeArr.forEach((time, index) => {
+        // 进度条跳转后重置当前歌词索引
+        if (time <= this.currentTime) {
+          this.lyricIndex = index
+        }
+      })
       this.locateLyric()
     },
     showDig () {
@@ -163,14 +168,6 @@ export default {
         this.swiper()
       })
 
-    },
-    // 进度条跳转后重置当前歌词索引
-    moveFn () {
-      this.lyricTimeArr.forEach((time, index) => {
-        if (time <= this.currentTime) {
-          this.lyricIndex = index
-        }
-      })
     },
     // 滑动切换
     swiper () {
@@ -495,9 +492,9 @@ export default {
 
   .songs {
     position: fixed;
-    bottom: -160px;
+    bottom: -165px;
     left: 0;
-    height: 160px;
+    height: 165px;
     width: 100vw;
     overflow: scroll;
     transition: all 0.3s;
