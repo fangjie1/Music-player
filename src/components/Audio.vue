@@ -99,6 +99,11 @@ export default {
       require: true
     }
   },
+  watch: {
+    percent () {
+      this.$refs.progress.style.width = this.percent + '%'
+    }
+  },
   mounted () {
     this.$refs.audio.onerror = () => {
       if (this.$refs.audio.error.message) {
@@ -159,7 +164,7 @@ export default {
       this.$emit('currentTime', this.audio.currentTime)
       this.audio.minTime = parseInt(this.audio.currentTime);
       this.percent = this.audio.minTime / this.audio.maxTime * 100
-      this.$refs.progress.style.width = this.percent + '%'
+
     },
     // 是否循环播放
     isLoop () {

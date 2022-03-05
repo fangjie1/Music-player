@@ -138,8 +138,8 @@ export default {
   watch: {
     currentTime () {
       this.lyricTimeArr.forEach((time, index) => {
-        // 进度条跳转后重置当前歌词索引
-        if (time <= this.currentTime) {
+        if (time < this.currentTime) {
+          // 进度条跳转后重置当前歌词索引
           this.lyricIndex = index
         }
       })
@@ -199,7 +199,6 @@ export default {
       this.lyric = this._formatLyr(lyricStr);
       // 初始化完毕先显示零秒歌词
       this.curLyric = this.lyric[0];
-      this.lyricIndex = 0
       this.loading = false
     },
     // 生成歌词对象
@@ -258,6 +257,7 @@ export default {
         }
       }
     },
+
     //设置歌词滚动
     setLyricToCenter (node) {
       let translateY = node.offsetTop - this.$refs['panel-lyrics'].offsetHeight / 2
@@ -380,7 +380,7 @@ export default {
   .content {
     margin-top: 50px;
     display: flex;
-    height: 62vh;
+    height: -webkit-calc(60vh);
     width: 200%;
     transition: transform 0.3s;
     &.panel1 {
@@ -473,7 +473,7 @@ export default {
       width: 100%;
       height: 100%;
       text-align: center;
-      overflow: hidden;
+      overflow: scroll;
       min-height: auto;
       .container {
         transition: all 0.4s;
@@ -492,9 +492,9 @@ export default {
 
   .songs {
     position: fixed;
-    bottom: -165px;
+    bottom: -160px;
     left: 0;
-    height: 165px;
+    height: 160px;
     width: 100vw;
     overflow: scroll;
     transition: all 0.3s;
