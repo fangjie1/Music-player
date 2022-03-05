@@ -265,6 +265,8 @@ export default {
       background: #0025f1;
       border-radius: 2px;
       margin: 0 12px;
+      padding: 10px 0;
+      background-clip: content-box;
       .progress {
         width: 0%;
         transition: all 0.2s;
@@ -272,7 +274,6 @@ export default {
         border-radius: 2px;
         background: #db3baa;
         position: relative;
-
         &::after {
           content: "";
           position: absolute;
