@@ -67,18 +67,15 @@
         <div ref="container"
              class="container">
           <p ref="lyrics"
-             v-for="(item,key) in lyric"
-             :key="key">{{item}}</p>
+             v-for="(item,key,index) of lyric"
+             :key="index">{{item}}</p>
         </div>
       </div>
     </div>
     <!-- 播放音频组件 -->
     <Audio ref="audio"
            :src="`https://music.163.com/song/media/outer/url?id=${songId}.mp3`"
-           :isPlaying="this.playState"
-           :lyric="lyric"
-           :curLyric="curLyric"
-           :lastLy="lastLy"
+           @currentTime="currentTimeFn"
            @pre="pre"
            @next="next"
            @changStatus="changStatus"
@@ -112,7 +109,7 @@ export default {
   data () {
     return {
       playState: false, // 音乐播放状态
-      loading: true,
+      loading: false,
       id: this.$route.query.id, // 上一页传过来的音乐或歌单id
       songInfo: {}, // 歌曲信息
       contentArr: [],
@@ -120,13 +117,13 @@ export default {
       lyricTimeArr: [],
       lyricIndex: 0, // 当前歌词索引
       curLyric: "", // 当前显示哪句歌词
-      lastLy: "", // 记录当前播放歌词
       currentTime: "",//记录当前播放时间
       isRecommendMusic: this.$route.query.isRecommendMusic || 0,
       songId: '',// 歌曲id
       songs: null,// 歌单
       songIndex: 0,
       showDig: false,
+      nodeList: null
     };
   },
   computed: {
@@ -140,21 +137,10 @@ export default {
   },
   watch: {
     currentTime () {
-      if (this.lyric[this.currentTime]) {
-        this.curLyric = this.lyric[this.currentTime];
-        this.lastLy = this.curLyric;
-      } else {
-        this.curLyric = this.lastLy;
-      }
-      if (this.currentTime == 0 && this.$refs.lyrics) {
-        this.$refs.lyrics.forEach(node => node.classList.remove('current'))
-        this.$refs.container.style.transform = `translateY(0px)`
-        this.lyricIndex = 0
-      }
       this.lyricTimeArr.forEach((time, index) => {
-        if (time == this.currentTime) {
+        if (time < this.currentTime) {
           // 进度条跳转后重置当前歌词索引
-          this.lyricIndex = index - 1
+          this.lyricIndex = index
         }
       })
       this.locateLyric()
@@ -180,7 +166,6 @@ export default {
       }
       this.$nextTick(() => {
         this.swiper()
-        this.showLyric();
       })
 
     },
@@ -202,19 +187,21 @@ export default {
     },
     // 获取歌曲
     async getSong (id) {
+      this.loading = true
       // 获取歌曲id
       this.songId = id
       // 获取歌曲详情, 和歌词方法
       const res = await getSongByIdAPI(id);
       this.songInfo = res.data.songs[0];
-      this.loading = false
       // 获取-并调用_formatLyr方法, 处理歌词
       const lyrContent = await getLyricByIdAPI(id);
       const lyricStr = lyrContent.data.lrc.lyric;
       this.lyric = this._formatLyr(lyricStr);
       // 初始化完毕先显示零秒歌词
       this.curLyric = this.lyric[0];
+      this.loading = false
     },
+    // 生成歌词对象
     _formatLyr (lyricStr) {
       let reg = /\[.+?\]/g; //
       let timeArr = lyricStr.match(reg); // 匹配所有[]字符串以及里面的一切内容, 返回数组
@@ -252,18 +239,15 @@ export default {
       this.playState = bol
     },
     // 监听播放audio进度, 切换歌词显示
-    showLyric () {
-      this.$refs.audio.$refs.audio.addEventListener("timeupdate", this.lyricTimeFn)
-      this.$refs.audio.$refs.audio.addEventListener("timeupdate", this.lyricTimeFn)
+    currentTimeFn (currentTime) {
+      this.currentTime = currentTime
     },
     playFn () {
       this.$refs.audio.play()
     },
-    lyricTimeFn () {
-      this.currentTime = Math.floor(this.$refs.audio.$refs.audio.currentTime);
-    },
     // 获取当前播放歌词标签
     locateLyric () {
+      //  currentLineTime当前歌词时间
       let currentLineTime = this.lyricTimeArr[this.lyricIndex]
       if (this.currentTime >= currentLineTime && this.lyricIndex < this.lyricTimeArr.length) {
         let node = this.$refs.lyrics[this.lyricIndex]
@@ -273,6 +257,7 @@ export default {
         }
       }
     },
+
     //设置歌词滚动
     setLyricToCenter (node) {
       let translateY = node.offsetTop - this.$refs['panel-lyrics'].offsetHeight / 2
@@ -280,6 +265,7 @@ export default {
       this.$refs.container.style.transform = `translateY(-${translateY}px)`
       this.$refs.lyrics.forEach(node => node.classList.remove('current'))
       node.classList.add('current')
+      this.curLyric = node.innerText
     },
     // 上一首
     pre () {
@@ -328,6 +314,7 @@ export default {
   },
   mounted () {
     this.start()
+
   },
   beforeDestroy () {
     this.$refs.audio.$refs.audio.removeEventListener("timeupdate", this.lyricTimeFn);
@@ -408,7 +395,7 @@ export default {
       .loading {
         position: absolute;
         left: 50%;
-        top: 25%;
+        top: 35%;
         transform: translate(-50%, -50%);
       }
       .song-wrapper {
@@ -486,7 +473,7 @@ export default {
       width: 100%;
       height: 100%;
       text-align: center;
-      overflow: hidden;
+      overflow: scroll;
       min-height: auto;
       .container {
         transition: all 0.4s;

@@ -163,6 +163,7 @@ export default {
     // 当音频当前时间改变后，改变进度条
     handleAudioTimeUpdated (e) {
       this.audio.currentTime = e.target.currentTime
+      this.$emit('currentTime', this.audio.currentTime)
       this.audio.minTime = parseInt(this.audio.currentTime);
       this.percent = this.audio.minTime / this.audio.maxTime * 100
     },
