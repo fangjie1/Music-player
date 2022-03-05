@@ -167,7 +167,6 @@ export default {
       this.$nextTick(() => {
         this.swiper()
       })
-
     },
     // 滑动切换
     swiper () {
@@ -380,7 +379,7 @@ export default {
   .content {
     margin-top: 50px;
     display: flex;
-    height: -webkit-calc(60vh);
+    height: 62vh;
     width: 200%;
     transition: transform 0.3s;
     &.panel1 {
@@ -473,7 +472,7 @@ export default {
       width: 100%;
       height: 100%;
       text-align: center;
-      overflow: scroll;
+      overflow: hidden;
       min-height: auto;
       .container {
         transition: all 0.4s;
@@ -489,7 +488,6 @@ export default {
       }
     }
   }
-
   .songs {
     position: fixed;
     bottom: -160px;
